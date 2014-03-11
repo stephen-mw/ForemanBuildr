@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+from foreman import Foreman
+from optparse import OptionParser
+from sys import argv, exit
+from os import environ
+import yaml
+import json
+
+# Make sure the user set their environment variables
+try:
+  profile = {
+    'url':  environ['FOREMAN_SERVER'],
+    'user': environ['FOREMAN_USER'],
+    'pw': environ['FOREMAN_PASS']
+  }
+except KeyError:
+  print("Please add the following to your environment: FOREMAN_SERVER, FOREMAN_USER, and FOREMAN_PASS")
+  exit()
+
+parser = OptionParser()
+parser.add_option("-f", "--filter",
+  dest="filter",
+  default=None,
+  help="A comma seperated list of hosts or groups in which to filter the results or action")
+parser.add_option("-g", "--group",
+  dest="group",
+  help="Comma separated list of group IDs to be affected by change")
+parser.add_option("-l", "--list",
+  dest="list",
+  help="List hosts, groups, or (group) tenants. Optionally provide a --filter with hosts or group.")
+parser.add_option("-s", "--status",
+  action="store_false", dest="status", default=False,
+  help="Print the build status of a group")
+parser.add_option("-u", "--unbuild",
+  action="store_true",
+  default=False,
+  dest="action",
+  help="Turn off the build flag for the host or group")
+parser.add_option("-j", "--json",
+  dest="json",
+  help="Output json instead of YAML")
+
+(options, args) = parser.parse_args()
+filter = options.filter
+list = options.list
+group = options.group
+json = options.json
+
+foreman = Foreman(profile)
+
+def die(text):
+  print text
+  exit()
+
+def output(response):
+  "Returns json or yaml and then exits the script."
+  if json:
+    print json.dumps(response, sort_keys=True, indent=4)
+  else:
+    print yaml.safe_dump(response,default_flow_style=False) 
+  exit()
+
+if list:
+  # Verify what we're trying to list and then print the output
+  if list not in ('groups', 'hosts', 'tenants'):
+    die("Invalid item to list: %s" % list)
+  if list == 'hosts':
+    output(foreman.describe_instances(filter=filter))
+  if list == 'groups':
+    output(foreman.describe_groups(filter=filter,pretty=True))
+  if list == 'tenants':
+    if filter == None:
+      die("You must provide a filter to list the hosts in a group")
+    output(foreman.describe_tenants(filter=filter))
