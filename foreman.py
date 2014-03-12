@@ -7,8 +7,9 @@ class Foreman:
   def __init__(self,profile):
     self.url = profile['url']
     self.user = profile['user']
-    self.auth = b64encode('%s:%s' % (profile['user'],profile['pw']))
     self.pw = profile['pw']
+    self.auth = b64encode('%s:%s' % (self.user, self.pw))
+    print self.auth
 
   def get_api(self,api,method=None,data=None):
     """"
@@ -16,7 +17,7 @@ class Foreman:
     (if other than GET), and authorization. Returns a json object.
     """
 
-    endpoint = "%s%s" % (self.url,api)
+    endpoint = "%s%s" % (self.url, api)
 
     # Generate a request acceptable to the foreman API
     request = None
@@ -29,14 +30,18 @@ class Foreman:
     if data:
       try:
         request.get_method = lambda: method
-        return json.load(urllib2.urlopen(request,data))
-      except urllib2.HTTPError as e:
-        stderr.write("Unable to fulfill request: %s" % e)
+        response = json.load(urllib2.urlopen(request,data))
+      except Exception as e:
+        stderr.write("Unable to fulfill request: %s\n" % e)
+        exit(1)
     else:
       try:
-        return json.load(urllib2.urlopen(request))
-      except urllib2.HTTPError as e:
-        stderr.write("Unable to fulfill request: %s" % e)
+        response = urllib2.urlopen(request)
+      except Exception as e:
+        stderr.write("Unable to fulfill request: %s\n" % e)
+        exit(1)
+
+    return json.load(response)
 
   def describe_instances(self,filter=None):
     """
@@ -73,6 +78,7 @@ class Foreman:
       results[name] = {}
       for k, v in i['hostgroup'].iteritems():
         results[name][k] = v
+    print groups
 
     if filter:
       filter_groups = {}
