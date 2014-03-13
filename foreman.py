@@ -9,7 +9,6 @@ class Foreman:
     self.user = profile['user']
     self.pw = profile['pw']
     self.auth = b64encode('%s:%s' % (self.user, self.pw))
-    print self.auth
 
   def get_api(self,api,method=None,data=None):
     """"
@@ -17,7 +16,7 @@ class Foreman:
     (if other than GET), and authorization. Returns a json object.
     """
 
-    endpoint = "%s%s" % (self.url, api)
+    endpoint = "%s/api/%s" % (self.url, api)
 
     # Generate a request acceptable to the foreman API
     request = None
