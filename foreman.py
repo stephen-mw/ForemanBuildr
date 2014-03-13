@@ -77,7 +77,6 @@ class Foreman:
       results[name] = {}
       for k, v in i['hostgroup'].iteritems():
         results[name][k] = v
-    print groups
 
     if filter:
       filter_groups = {}
@@ -85,7 +84,7 @@ class Foreman:
         try:
           filter_groups[group] = results[group]
         except KeyError:
-          filter_groups[group] = "Not found"
+          filter_groups[group] = "Group not found"
       results = filter_groups
     return results
 
@@ -96,7 +95,6 @@ class Foreman:
     groups = self.describe_groups()
 
     filter = [int(f) for f in filter.split(',')]
-    print filter
     for host in hosts.values():
       if host['hostgroup_id'] in filter:
         filtered_results[host['name']] = host
